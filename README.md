@@ -21,7 +21,7 @@ cd ox-interview
 2. Build the local .jar files: Our Dockerfiles (for crm-service and notification-service) use layertools and expect the .jar files to exist. We must build them locally first.
 Run this command from the root project folder:
 ```bash
-mvn clean install -U
+mvn clean install -U -DskipTests
 ```
 ## Running with Docker Compose
 1. Start everything in the background. Run this command from the root project folder:
@@ -33,3 +33,9 @@ Once running, the services are available at these addresses:
 * Main Application (Frontend): `http://localhost:3000`
 * Swagger API (Backend): `http://localhost:8080/swagger-ui/index.html`
 * Kafka UI (Topic Monitoring): `http://localhost:8090`
+
+## Default user
+email: `user@example.com`
+password: `string`
+
+
