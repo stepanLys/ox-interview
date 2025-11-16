@@ -15,8 +15,8 @@ Before you begin, ensure you have the following installed:
 These steps only need to be performed once to prepare the project.
 1. Clone the repository:
 ```bash
-git clone https://github.com/YourName/crm-project.git
-cd crm-project
+git clone https://github.com/stepanLys/ox-interview.git
+cd ox-interview
 ```
 2. Build the local .jar files: Our Dockerfiles (for crm-service and notification-service) use layertools and expect the .jar files to exist. We must build them locally first.
 Run this command from the root project folder:
