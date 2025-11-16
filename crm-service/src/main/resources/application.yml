@@ -1,0 +1,49 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: crm
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    open-in-view: false
+
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:sql/init.sql
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/crm_db
+    username: crm_user
+    password: crm_password
+    driver-class-name: org.postgresql.Driver
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9094
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+app:
+  jwt:
+    secret: "u38CPQy7LC/Kqkr+zuDtBBUb1brT6AbgPoBCDYF4q/Cya2b+GVnIJ4fD6+jLjSMcAy6mXU3MO0XPcBBFSDhGv9TxeClI8z9X3Bpk7uddlf8jlAzG+E22ozQ9hleMaK3j"
+    expiration-ms: 86400000 # 24h
+
+logging:
+  level:
+    org.springframework: INFO
+    org.springframework.cache: DEBUG
+    org.hibernate.sql: DEBUG
+    com.interview.crm: DEBUG

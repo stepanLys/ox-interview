@@ -1,0 +1,115 @@
+version: '3.8'
+
+services:
+  
+  postgres-db:
+    image: postgres:18.1-alpine
+    container_name: crm-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: crm_db
+      POSTGRES_USER: crm_user
+      POSTGRES_PASSWORD: crm_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm_user -d crm_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-cache:
+    image: redis:8.2.3-alpine
+    container_name: crm-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka-broker:
+    image: confluentinc/cp-kafka:8.1.0
+    container_name: crm-kafka-kraft
+    ports:
+      - "9094:9094"
+      - "9092:9092"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      
+      KAFKA_CLUSTER_ID: 'ThisIsOurTestCrmClusterId12345' 
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka-broker:9093'
+
+      KAFKA_LISTENERS: 'PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka-broker:9092,EXTERNAL://localhost:9094'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT'
+      
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: crm-kafka-ui
+    ports:
+      - "8090:8080"
+    depends_on:
+      - kafka-broker
+    environment:
+      KAFKA_CLUSTERS_0_NAME: "Local CRM Cluster"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka-broker:9092"
+
+  crm-service:
+    build:
+      context: ./crm-service
+    container_name: crm-app-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      kafka-broker:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/crm_db
+      SPRING_DATA_REDIS_HOST: redis-cache
+      SPRING_KAFKA_PRODUCER_BOOTSTRAP_SERVERS: kafka-broker:9092
+
+
+  notification-service:
+    build:
+      context: ./notification-service
+    container_name: crm-notification-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      kafka-broker:
+        condition: service_started
+    environment:
+      SERVER_PORT: 8081
+      SPRING_KAFKA_CONSUMER_BOOTSTRAP_SERVERS: kafka-broker:9092
+
+  frontend-react:
+    build:
+      context: ./frontend-react
+    container_name: crm-frontend
+    ports:
+      - "3000:5000"
+    depends_on:
+      - crm-service
+
+volumes:
+  postgres_data:
+  redis_data:
+  kafka_data:

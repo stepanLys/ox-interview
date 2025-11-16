@@ -1,0 +1,24 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: notification-service
+
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:9094
+      group-id: "crm-notification-group"
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    properties:
+      spring:
+        json:
+          fail-on-unknown-properties: false
+          trusted:
+            packages: "com.interview.crm.events.dto" 
+websocket:
+  endpoint: "/ws" 
+  topic-prefix: "/topic"
+  app-prefix: "/app"
